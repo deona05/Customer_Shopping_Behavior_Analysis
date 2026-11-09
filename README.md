@@ -1,107 +1,105 @@
 # Customer Shopping Behavior Analysis
 
-This project explores customer shopping patterns using a retail dataset with demographic, purchase, and behavior attributes. The analysis combines Python-based exploratory data analysis (EDA), SQL reporting queries, and a Power BI dashboard to uncover customer trends and business insights.
+An exploratory retail analytics project using Python and Pandas, MySQL, and Power BI. It examines customer, product, purchase, subscription, discount, shipping, and review data from a 3,900-row dataset.
 
-## Overview
+## Project contents
 
-The dataset contains customer purchase information such as:
-
-- Customer demographics (Age, Gender, Location)
-- Product details (Item Purchased, Category, Size, Color, Season)
-- Purchase behavior (Purchase Amount, Shipping Type, Promo Code, Discount Applied)
-- Customer engagement (Review Rating, Subscription Status, Frequency of Purchases)
-
-The goal is to understand how customers shop, which products perform best, how discounts and subscriptions affect spending, and where business opportunities may exist for marketing and retention.
-
-## Business Questions Explored
-
-- Which gender segment contributes more revenue?
-- Which products have the highest average review ratings?
-- Do subscribed customers spend more than non-subscribed customers?
-- How does shipping type affect average purchase amount?
-- Which products have the highest discount usage rate?
-- What patterns exist in customer purchasing frequency and spending habits?
+| File | Purpose |
+|---|---|
+| `customer_shopping_behavior.csv` | Source dataset (3,900 records, 18 columns) |
+| `CustomerBehavior.ipynb` | Data inspection, cleaning, feature engineering, and loading the prepared data into MySQL |
+| `CustomerBehavior.sql` | Six SQL analyses using the `mycustomer` table |
+| `custbrhavior.pbix` | Power BI report |
+| `LICENSE` | MIT license for this project |
 
 ## Dataset
 
-The main data source is:
+The CSV contains one row per customer and these fields:
 
-- `customer_shopping_behavior.csv`
+- **Customer and demographics:** Customer ID, Age, Gender, Location
+- **Product and purchase:** Item Purchased, Category, Purchase Amount (USD), Size, Color, Season
+- **Shopping and engagement:** Review Rating, Subscription Status, Shipping Type, Discount Applied, Promo Code Used, Previous Purchases, Payment Method, Frequency of Purchases
 
-This file contains 3,900 customer records and includes both transactional and behavioral variables for retail analytics.
+The source has 37 missing review ratings; the notebook fills these with the median rating for the corresponding product category. It also standardizes column names, renames the purchase amount column, creates age quartiles, and maps purchase frequency labels to days. The two discount/promo flags are compared and the redundant `promo_code_used` column is dropped when preparing the SQL table.
 
-## Project Structure
+The dataset does not include transaction dates, order IDs, costs, or discount amounts. Therefore, its summed purchase amounts are sample totals, not time-period revenue or profit, and it cannot support time-series or validated churn analysis.
 
-```text
-Customer_Shopping_Behavior_Analysis/
-├── customer_shopping_behavior.csv      # Source dataset
-├── CustomerBehavior.ipynb              # Python notebook for EDA and analysis
-├── CustomerBehavior.sql                # SQL queries for business analysis
-├── custbrhavior.pbix                  # Power BI dashboard file
-├── LICENSE                            # Project license
-├── README.md                          # Project documentation
-└── .gitignore                         # (if present in your local setup)
+## Business questions
+
+The SQL file explores:
+
+1. How summed purchase amounts compare by gender.
+2. Which discounted purchases are at or above the overall average purchase amount.
+3. Which five products have the highest average review rating.
+4. How average purchase amount compares between Standard and Express shipping.
+5. How customer counts, average purchase amounts, and summed purchase amounts compare by subscription status.
+6. Which five products have the highest discount-use rate.
+
+These are descriptive comparisons; they do not establish that a discount, subscription, shipping type, or demographic characteristic causes a change in spending.
+
+## Requirements
+
+- Python 3
+- Jupyter Notebook
+- Python packages: `pandas`, `SQLAlchemy`, `PyMySQL`, and `python-dotenv`
+- MySQL Server
+- Power BI Desktop (to open the `.pbix` report)
+
+Install the Python packages in your environment:
+
+```bash
+python -m pip install pandas sqlalchemy pymysql python-dotenv jupyter
 ```
 
-## Tools and Technologies
+## Run the analysis
 
-- Python
-  - Pandas
-  - Jupyter Notebook
-- SQL
-  - MySQL-compatible queries
-- Power BI
-  - Data visualization and dashboard reporting
+### 1. Prepare MySQL
 
-## Workflow
+Start MySQL Server and create the database before loading the table:
 
-1. Load and inspect the customer dataset in Python.
-2. Clean and explore the data using EDA techniques.
-3. Derive insights from customer purchasing trends.
-4. Write SQL queries to answer specific business questions.
-5. Build a Power BI dashboard to visualize key findings.
+```sql
+CREATE DATABASE custBehavior;
+```
 
-## How to Use
+### 2. Configure the database connection
 
-### Option 1: Explore in Jupyter Notebook
+Create a local `.env` file in the project directory (do not commit it) with your own MySQL credentials:
 
-1. Open `CustomerBehavior.ipynb` in VS Code, Jupyter Notebook, or JupyterLab.
-2. Ensure Python dependencies are installed.
-3. Run the cells to load the dataset and perform analysis.
+```dotenv
+DB_USER=root
+DB_PASSWORD=your_mysql_password
+DB_HOST=localhost
+DB_NAME=custBehavior
+```
 
-### Option 2: Run SQL Analysis
+The `.env` file is excluded by `.gitignore`. Do not put credentials in the notebook or share them publicly.
 
-1. Open `CustomerBehavior.sql` in MySQL or any compatible SQL editor.
-2. Create a database and import the CSV data.
-3. Execute the queries to derive business insights.
+### 3. Run the notebook
 
-### Option 3: Review the Dashboard
+Open `CustomerBehavior.ipynb` and set the working directory to the project folder. Run the cells from top to bottom:
 
-Open `custbrhavior.pbix` in Power BI Desktop to view the visual dashboard.
+1. Load `customer_shopping_behavior.csv` into the `df` DataFrame.
+2. Inspect and prepare the data.
+3. Run the MySQL loading cell to replace/create the `mycustomer` table in `custBehavior`.
+4. Check the purchase-frequency mapping validation output.
 
-## Example SQL Insights Included
+The notebook loads the CSV by a relative filename, so it must run with the project directory as its working directory. The MySQL loading cell requires a reachable MySQL server, a valid `.env`, and permission to create or replace tables.
 
-The SQL file includes queries for:
+### 4. Run SQL queries
 
-- Total revenue by gender
-- Customers with discount usage above the average purchase amount
-- Top 5 products by average rating
-- Average spend by shipping method
-- Revenue comparison between subscribers and non-subscribers
-- Discount penetration by product category/item
+After the notebook has loaded `mycustomer`, open `CustomerBehavior.sql` in a MySQL-compatible SQL client and execute the queries. The SQL file selects the `custBehavior` database and expects the transformed table and normalized column names produced by the notebook; importing the raw CSV directly does not create that schema.
 
-## Suggested Future Enhancements
+### 5. Open the dashboard
 
-- Add customer churn and retention analysis
-- Build predictive models for purchase probability
-- Extend dashboard with KPI cards and filters
-- Use clustering to segment customers by buying behavior
-- Incorporate time-series analysis for seasonal trends
+Open `custbrhavior.pbix` in Power BI Desktop. The report contains a single page with KPI cards, category and age-group charts, a subscription chart, and slicers.
 
-## License
+## Current scope and limitations
 
-This project is licensed under the MIT License. See the `LICENSE` file for details.
+- The notebook performs data inspection, missing-rating imputation, column cleanup, age/frequency feature engineering, and MySQL loading. It does not currently include a plotted EDA section.
+- SQL demonstrates filtering, grouping, aggregate functions, sorting, a scalar subquery, and a `CASE` expression. It does not currently demonstrate joins, CTEs, or window functions.
+- The dataset is cross-sectional and has no dates or order-level history, limiting trend and retention analysis.
+- Review Power BI aggregations and measure definitions in Desktop before relying on dashboard totals. Customer IDs should be counted, not summed, for customer-count visuals.
 
-## Summary
+## License and data
 
-This repository demonstrates a practical end-to-end retail analytics workflow using customer data, Python analysis, SQL querying, and dashboard visualization. It is suitable for learning, portfolio projects, and business intelligence demonstrations.
+The project code and documentation are licensed under the MIT License; see [`LICENSE`](LICENSE). The dataset may have separate source and reuse terms; verify those terms with the dataset provider before redistributing it.
